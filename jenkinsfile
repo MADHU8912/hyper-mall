@@ -4,7 +4,13 @@ pipeline {
     stages {
         stage('Debug') {
             steps {
-                sh 'echo "Jenkins is running"'
+                bat 'echo Jenkins is working on Windows'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                bat 'echo Building project...'
             }
         }
     }
