@@ -2,15 +2,58 @@ pipeline {
     agent any
 
     stages {
-        stage('Debug') {
+
+        stage('Clone') {
             steps {
-                bat 'echo Jenkins is working on Windows'
+                git 'https://github.com/YOUR_USERNAME/hyper-mall.git'
             }
         }
 
         stage('Build') {
             steps {
-                bat 'echo Building project...'
+                echo 'Building project...'
+            }
+        }
+
+        stage('Live Logs') {
+            steps {
+                sh 'echo "Build running..." > logs.txt'
+            }
+        }
+
+        stage('Report') {
+            steps {
+                sh 'echo "{\\"status\\":\\"SUCCESS\\"}" > report.json'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh 'docker build -t yourdockerhub/hyper-mall .'
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS'
+                )]) {
+                    sh 'echo $PASS | docker login -u $USER --password-stdin'
+                }
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                sh 'docker push yourdockerhub/hyper-mall'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying to server...'
             }
         }
     }
