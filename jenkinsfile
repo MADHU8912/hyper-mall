@@ -24,18 +24,19 @@ pipeline {
 
         stage('Docker Login') {
     steps {
-        withCredentials([string(
+        withCredentials([usernamePassword(
             credentialsId: 'dockerhub-creds',
-            variable: 'PASS'
+            usernameVariable: 'USER',
+            passwordVariable: 'PASS'
         )]) {
             bat '''
             echo Logging into Docker...
-            echo %PASS% | docker login -u nikhilabba12 --password-stdin
+            docker logout
+            echo %PASS% | docker login -u %USER% --password-stdin
             '''
         }
     }
 }
-
         stage('Docker Push') {
             steps {
                 bat 'docker push nikhilabba12/hyper-mall'
