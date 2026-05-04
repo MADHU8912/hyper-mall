@@ -3,46 +3,17 @@ pipeline {
 
     stages {
 
-        stage('Build') {
+        stage('Test Stage') {
             steps {
-                bat 'echo Building...'
+                echo 'Stage is executing'
             }
         }
 
-        stage('Live Logs') {
+        stage('Windows Command') {
             steps {
-                bat 'echo Running logs > frontend\\logs.txt'
+                bat 'echo Running on Windows'
             }
         }
 
-        stage('Docker Build') {
-            steps {
-                bat 'docker build -t yourdockerhub/hyper-mall .'
-            }
-        }
-
-        stage('Docker Login') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'USER',
-                    passwordVariable: 'PASS'
-                )]) {
-                    bat 'echo %PASS% | docker login -u %USER% --password-stdin'
-                }
-            }
-        }
-
-        stage('Docker Push') {
-            steps {
-                bat 'docker push yourdockerhub/hyper-mall'
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                bat 'echo Deploy step complete'
-            }
-        }
     }
 }
