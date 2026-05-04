@@ -2,22 +2,10 @@ pipeline {
     agent any
 
     stages {
-        stage('Clone') {
+        stage('Test Stage') {
             steps {
-                git 'https://github.com/YOUR_USERNAME/hyper-mall.git'
+                echo 'Hello from Jenkins'
             }
         }
-
-        stage('Build') {
-            steps {
-                echo 'Build started...'
-            }
-        }
-       stage('Live Logs') {
-    steps {
-        sh '''
-        echo "Streaming logs..."
-        echo "Build running..." >> logs.txt
-        '''
     }
 }
