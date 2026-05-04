@@ -10,19 +10,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                echo 'Building...'
-            }
-        }
-
-        stage('Test Report') {
-            steps {
-                echo 'Generating report...'
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo 'Deploying...'
+                echo 'Build started...'
             }
         }
     }
