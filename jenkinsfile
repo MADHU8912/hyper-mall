@@ -3,17 +3,52 @@ pipeline {
 
     stages {
 
-        stage('Test Stage') {
+        stage('Clone') {
             steps {
-                echo 'Stage is executing'
+                echo 'Cloning repo...'
             }
         }
 
-        stage('Windows Command') {
+        stage('Build') {
             steps {
-                bat 'echo Running on Windows'
+                bat 'echo Building Hyper Mall...'
             }
         }
 
+        stage('Live Logs') {
+            steps {
+                bat 'echo Running logs > frontend\\logs.txt'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                bat 'docker build -t yourdockerhub/hyper-mall .'
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS'
+                )]) {
+                    bat 'echo %PASS% | docker login -u %USER% --password-stdin'
+                }
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                bat 'docker push yourdockerhub/hyper-mall'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                bat 'echo Deploying to Render...'
+            }
+        }
     }
 }
