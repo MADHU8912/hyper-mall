@@ -3,15 +3,9 @@ pipeline {
 
     stages {
 
-        stage('Init Logs') {
-            steps {
-                bat 'echo Build started > frontend/logs.txt'
-            }
-        }
-
         stage('Build') {
             steps {
-                bat 'echo Building project >> frontend/logs.txt'
+                bat 'echo Building Hyper Mall...'
             }
         }
 
@@ -21,7 +15,7 @@ pipeline {
             }
         }
 
-        stage('Docker Login') {
+        stage('Docker Push') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-creds',
@@ -29,32 +23,15 @@ pipeline {
                     passwordVariable: 'PASS'
                 )]) {
                     bat 'echo %PASS% | docker login -u %USER% --password-stdin'
+                    bat 'docker push yourdockerhub/hyper-mall'
                 }
             }
         }
 
-        stage('Docker Push') {
+        stage('Deploy (Render Trigger)') {
             steps {
-                bat 'docker push yourdockerhub/hyper-mall'
+                bat 'echo Deploy triggered...'
             }
         }
-
-        stage('Report') {
-            steps {
-                bat '''
-                echo { "status":"SUCCESS", "time":"%DATE% %TIME%" } > frontend/report.json
-                '''
-            }
-        }
-    }
-}stage('Live Logs') {
-    steps {
-        bat '''
-        echo Build started > frontend\\logs.txt
-        timeout /t 2
-        echo Step 1 complete >> frontend\\logs.txt
-        timeout /t 2
-        echo Step 2 complete >> frontend\\logs.txt
-        '''
     }
 }
