@@ -3,33 +3,21 @@ pipeline {
 
     stages {
 
-        stage('Clone') {
+        stage('Init Logs') {
             steps {
-                git 'https://github.com/YOUR_USERNAME/hyper-mall.git'
+                bat 'echo Build started > frontend/logs.txt'
             }
         }
 
         stage('Build') {
             steps {
-                echo 'Building project...'
-            }
-        }
-
-        stage('Live Logs') {
-            steps {
-                sh 'echo "Build running..." > logs.txt'
-            }
-        }
-
-        stage('Report') {
-            steps {
-                sh 'echo "{\\"status\\":\\"SUCCESS\\"}" > report.json'
+                bat 'echo Building project >> frontend/logs.txt'
             }
         }
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t yourdockerhub/hyper-mall .'
+                bat 'docker build -t yourdockerhub/hyper-mall .'
             }
         }
 
@@ -40,21 +28,33 @@ pipeline {
                     usernameVariable: 'USER',
                     passwordVariable: 'PASS'
                 )]) {
-                    sh 'echo $PASS | docker login -u $USER --password-stdin'
+                    bat 'echo %PASS% | docker login -u %USER% --password-stdin'
                 }
             }
         }
 
         stage('Docker Push') {
             steps {
-                sh 'docker push yourdockerhub/hyper-mall'
+                bat 'docker push yourdockerhub/hyper-mall'
             }
         }
 
-        stage('Deploy') {
+        stage('Report') {
             steps {
-                echo 'Deploying to server...'
+                bat '''
+                echo { "status":"SUCCESS", "time":"%DATE% %TIME%" } > frontend/report.json
+                '''
             }
         }
+    }
+}stage('Live Logs') {
+    steps {
+        bat '''
+        echo Build started > frontend\\logs.txt
+        timeout /t 2
+        echo Step 1 complete >> frontend\\logs.txt
+        timeout /t 2
+        echo Step 2 complete >> frontend\\logs.txt
+        '''
     }
 }

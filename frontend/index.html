@@ -1,41 +1,85 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Hyper Mall Dashboard</title>
+  <title>Dashboard</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    body { font-family: Arial; display: flex; }
-    .panel { width: 33%; padding: 10px; border: 1px solid #ccc; }
-    h2 { text-align: center; }
+    body {
+      font-family: Arial;
+      background: #111;
+      color: #0f0;
+      padding: 20px;
+    }
+
+    .panel {
+      background: #000;
+      border: 1px solid #0f0;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    pre {
+      height: 200px;
+      overflow-y: auto;
+    }
   </style>
 </head>
 <body>
 
-<div class="panel">
-  <h2>Build Status</h2>
-  <pre id="build">Loading...</pre>
-</div>
+  <!-- 🔹 Logs Panel -->
+  <div class="panel">
+    <h2>Live Logs</h2>
+    <pre id="logs">Loading...</pre>
+  </div>
 
-<div class="panel">
-  <h2>Reports</h2>
-  <pre id="report">Loading...</pre>
-</div>
+  <!-- 🔹 Chart Panel -->
+  <div class="panel">
+    <h2>Build Status Chart</h2>
+    <canvas id="chart"></canvas>
+  </div>
 
-<div class="panel">
-  <h2>Deploy</h2>
-  <pre id="deploy">Loading...</pre>
-</div>
+  <script>
+    // 🔁 Load Logs
+    async function loadLogs() {
+      const res = await fetch('/logs');
+      const data = await res.text();
+      document.getElementById('logs').innerText = data;
+    }
 
-<script>
-async function loadData() {
-  const res = await fetch('status.json');
-  const data = await res.json();
+    setInterval(loadLogs, 2000);
+    loadLogs();
 
-  document.getElementById('build').innerText = data.build;
-  document.getElementById('report').innerText = data.report;
-  document.getElementById('deploy').innerText = data.deploy;
-}
-loadData();
-</script>
+    // 📊 Chart Setup
+    let chart;
+
+    async function loadChart() {
+      const res = await fetch('/report');
+      const data = await res.json();
+
+      const labels = data.map(d => d.time);
+      const values = data.map(d => d.status);
+
+      if (chart) {
+        chart.destroy();
+      }
+
+      chart = new Chart(document.getElementById('chart'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Build Status',
+            data: values
+          }]
+        }
+      });
+    }
+
+    setInterval(loadChart, 5000);
+    loadChart();
+  </script>
 
 </body>
 </html>
