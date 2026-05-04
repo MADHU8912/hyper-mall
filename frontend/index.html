@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Hyper Mall Dashboard</title>
+  <style>
+    body { font-family: Arial; display: flex; }
+    .panel { width: 33%; padding: 10px; border: 1px solid #ccc; }
+    h2 { text-align: center; }
+  </style>
+</head>
+<body>
+
+<div class="panel">
+  <h2>Build Status</h2>
+  <pre id="build">Loading...</pre>
+</div>
+
+<div class="panel">
+  <h2>Reports</h2>
+  <pre id="report">Loading...</pre>
+</div>
+
+<div class="panel">
+  <h2>Deploy</h2>
+  <pre id="deploy">Loading...</pre>
+</div>
+
+<script>
+async function loadData() {
+  const res = await fetch('status.json');
+  const data = await res.json();
+
+  document.getElementById('build').innerText = data.build;
+  document.getElementById('report').innerText = data.report;
+  document.getElementById('deploy').innerText = data.deploy;
+}
+loadData();
+</script>
+
+</body>
+</html>
