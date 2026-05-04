@@ -5,7 +5,8 @@ pipeline {
 
         stage('Clone') {
             steps {
-                echo 'Cloning repo...'
+                checkout scm
+                echo 'Repository cloned successfully'
             }
         }
 
@@ -15,15 +16,9 @@ pipeline {
             }
         }
 
-        stage('Live Logs') {
-            steps {
-                bat 'echo Running logs > frontend\\logs.txt'
-            }
-        }
-
         stage('Docker Build') {
             steps {
-                bat 'docker build -t yourdockerhub/hyper-mall .'
+                bat 'docker build -t nikhilabba12/hyper-mall .'
             }
         }
 
@@ -41,13 +36,29 @@ pipeline {
 
         stage('Docker Push') {
             steps {
-                bat 'docker push yourdockerhub/hyper-mall'
+                bat 'docker push nikhilabba12/hyper-mall'
             }
         }
 
-        stage('Deploy') {
+        stage('Docker Pull') {
             steps {
-                bat 'echo Deploying to Render...'
+                bat 'docker pull nikhilabba12/hyper-mall'
+            }
+        }
+
+        stage('Deploy (Run Container)') {
+            steps {
+                bat '''
+                docker stop hyper-mall-container || exit 0
+                docker rm hyper-mall-container || exit 0
+                docker run -d -p 3000:3000 --name hyper-mall-container nikhilabba12/hyper-mall
+                '''
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                bat 'docker ps'
             }
         }
     }
