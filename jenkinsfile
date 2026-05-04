@@ -2,15 +2,9 @@ pipeline {
     agent any
 
     stages {
-        stage('Stage 1') {
+        stage('Debug') {
             steps {
-                echo 'Stage 1 running...'
-            }
-        }
-
-        stage('Stage 2') {
-            steps {
-                echo 'Stage 2 running...'
+                sh 'echo "Jenkins is running"'
             }
         }
     }
