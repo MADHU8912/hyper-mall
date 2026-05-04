@@ -2,35 +2,9 @@ pipeline {
     agent any
 
     stages {
-
-        stage('Build') {
+        stage('Test') {
             steps {
-                bat 'echo Building Hyper Mall...'
-            }
-        }
-
-        stage('Docker Build') {
-            steps {
-                bat 'docker build -t yourdockerhub/hyper-mall .'
-            }
-        }
-
-        stage('Docker Push') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'USER',
-                    passwordVariable: 'PASS'
-                )]) {
-                    bat 'echo %PASS% | docker login -u %USER% --password-stdin'
-                    bat 'docker push yourdockerhub/hyper-mall'
-                }
-            }
-        }
-
-        stage('Deploy (Render Trigger)') {
-            steps {
-                bat 'echo Deploy triggered...'
+                echo 'Jenkins pipeline working'
             }
         }
     }
