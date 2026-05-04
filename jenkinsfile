@@ -23,20 +23,23 @@ pipeline {
         }
 
         stage('Docker Login') {
-    steps {
-        withCredentials([usernamePassword(
-            credentialsId: 'dockerhub-creds',
-            usernameVariable: 'USER',
-            passwordVariable: 'PASS'
-        )]) {
-            bat '''
-            echo Logging into Docker...
-            docker logout
-            echo %PASS% | docker login -u %USER% --password-stdin
-            '''
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS'
+                )]) {
+                    bat '''
+                    echo Logging into Docker...
+                    docker logout
+                    echo %PASS%> docker_pass.txt
+                    type docker_pass.txt | docker login -u %USER% --password-stdin
+                    del docker_pass.txt
+                    '''
+                }
+            }
         }
-    }
-}
+
         stage('Docker Push') {
             steps {
                 bat 'docker push nikhilabba12/hyper-mall'
@@ -52,9 +55,9 @@ pipeline {
         stage('Deploy (Run Container)') {
             steps {
                 bat '''
-                docker stop hyper-mall-container || exit 0
-                docker rm hyper-mall-container || exit 0
-                docker run -d -p 3000:3000 --name hyper-mall-container nikhilabba12/hyper-mall
+                docker stop hyper-mall-container >nul 2>&1
+                docker rm hyper-mall-container >nul 2>&1
+                docker run -d -p 10000:10000 --name hyper-mall-container nikhilabba12/hyper-mall
                 '''
             }
         }
