@@ -23,16 +23,18 @@ pipeline {
         }
 
         stage('Docker Login') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'USER',
-                    passwordVariable: 'PASS'
-                )]) {
-                    bat 'echo %PASS% | docker login -u %USER% --password-stdin'
-                }
-            }
+    steps {
+        withCredentials([string(
+            credentialsId: 'dockerhub-creds',
+            variable: 'PASS'
+        )]) {
+            bat '''
+            echo Logging into Docker...
+            echo %PASS% | docker login -u nikhilabba12 --password-stdin
+            '''
         }
+    }
+}
 
         stage('Docker Push') {
             steps {
