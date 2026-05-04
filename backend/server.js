@@ -1,49 +1,53 @@
 const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
 const fs = require('fs');
 const path = require('path');
-const { WebSocketServer } = require('ws');
 
 const app = express();
-const PORT = 3000;
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 
-// serve frontend
-app.use(express.static(path.join(__dirname, '../public')));
+// 1. Dynamic Port for Render
+const PORT = process.env.PORT || 10000;
 
-// logs API
-app.get('/logs', (req, res) => {
-  fs.readFile(path.join(__dirname, '../logs.txt'), 'utf8', (err, data) => {
-    if (err) return res.status(500).send('Error reading logs');
-    res.send(data);
-  });
+// 2. Serve Frontend Files
+// This allows Render to show your index.html when you visit the URL
+app.use(express.static(path.join(__dirname, '../frontend')));
+
+// 3. Root Route (Fixes "Cannot GET /")
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
-// report API (for chart)
-app.get('/report', (req, res) => {
-  const data = [
-    { time: "10:00", status: 1 },
-    { time: "10:05", status: 0 },
-    { time: "10:10", status: 1 }
-  ];
-  res.json(data);
+// 4. API Status Route
+app.get('/api/status', (req, res) => {
+    res.json({
+        project: "Hyper Mall",
+        status: "Online",
+        timestamp: new Date()
+    });
 });
 
-// start HTTP server
-const server = app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
-
-// ✅ attach WebSocket to SAME server (no 8080 issue)
-const wss = new WebSocketServer({ server });
-
+// 5. WebSocket Logic for Live Logs
 wss.on('connection', (ws) => {
-  console.log('Client connected');
+    console.log('Dashboard Client Connected');
+    
+    // Send logs every 2 seconds to the UI
+    const logInterval = setInterval(() => {
+        const logPath = path.join(__dirname, '../frontend/logs.txt');
+        
+        if (fs.existsSync(logPath)) {
+            const logs = fs.readFileSync(logPath, 'utf8');
+            ws.send(JSON.stringify({ type: 'logs', data: logs }));
+        } else {
+            ws.send(JSON.stringify({ type: 'logs', data: "Waiting for Jenkins logs..." }));
+        }
+    }, 2000);
 
-  const interval = setInterval(() => {
-    ws.send(`Log update: ${new Date().toLocaleTimeString()}`);
-  }, 3000);
+    ws.on('close', () => clearInterval(logInterval));
+});
 
-  ws.on('close', () => {
-    clearInterval(interval);
-    console.log('Client disconnected');
-  });
+server.listen(PORT, () => {
+    console.log(`🚀 Hyper Mall Server running on port ${PORT}`);
 });
