@@ -37,6 +37,31 @@ pipeline {
             }
         }
 
+        // ✅ NEW
+        stage('Docker Pull') {
+            steps {
+                bat 'docker pull nikhilabba12/hyper-mall'
+            }
+        }
+
+        // ✅ NEW
+        stage('Deploy (Run Container)') {
+            steps {
+                bat '''
+                docker stop hyper-mall-container || exit 0
+                docker rm hyper-mall-container || exit 0
+                docker run -d -p 10000:10000 --name hyper-mall-container nikhilabba12/hyper-mall
+                '''
+            }
+        }
+
+        // ✅ NEW
+        stage('Verify') {
+            steps {
+                bat 'docker ps'
+            }
+        }
+
         stage('Export Logs') {
             steps {
                 bat '''
@@ -54,9 +79,10 @@ pipeline {
             }
         }
 
+        // ⚠️ FIX THIS URL
         stage('Deploy Render') {
             steps {
-                bat 'curl -X POST https://your-render-deploy-hook'
+                bat 'curl -X POST https://YOUR_REAL_RENDER_URL'
             }
         }
     }
