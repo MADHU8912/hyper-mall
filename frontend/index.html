@@ -1,85 +1,123 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Dashboard</title>
+  <meta charset="UTF-8">
+  <title>Hyper Mall Dashboard</title>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     body {
+      background: #0f172a;
+      color: white;
       font-family: Arial;
-      background: #111;
-      color: #0f0;
       padding: 20px;
     }
 
-    .panel {
-      background: #000;
-      border: 1px solid #0f0;
-      padding: 15px;
+    h1 {
+      text-align: center;
+      color: #38bdf8;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 20px;
       margin-bottom: 20px;
+      border-radius: 10px;
     }
 
     pre {
+      background: black;
       height: 200px;
       overflow-y: auto;
+      padding: 10px;
+      border-radius: 5px;
     }
   </style>
 </head>
+
 <body>
 
-  <!-- 🔹 Logs Panel -->
-  <div class="panel">
-    <h2>Live Logs</h2>
-    <pre id="logs">Loading...</pre>
-  </div>
+<h1>🚀 Hyper Mall Dashboard</h1>
 
-  <!-- 🔹 Chart Panel -->
-  <div class="panel">
-    <h2>Build Status Chart</h2>
-    <canvas id="chart"></canvas>
-  </div>
+<!-- 🟢 Status -->
+<div class="card">
+  <h2>Status</h2>
+  <p id="status">Connecting...</p>
+</div>
 
-  <script>
-    // 🔁 Load Logs
-    async function loadLogs() {
-      const res = await fetch('/logs');
-      const data = await res.text();
-      document.getElementById('logs').innerText = data;
-    }
+<!-- 🔴 Docker Logs -->
+<div class="card">
+  <h2>🔴 Docker Logs</h2>
+  <pre id="dockerLogs">Waiting...</pre>
+</div>
 
-    setInterval(loadLogs, 2000);
-    loadLogs();
+<!-- ⚙️ Jenkins Logs -->
+<div class="card">
+  <h2>⚙️ Jenkins Logs</h2>
+  <pre id="jenkinsLogs">Waiting...</pre>
+</div>
 
-    // 📊 Chart Setup
-    let chart;
+<!-- 📊 Chart -->
+<div class="card">
+  <h2>📊 Build Chart</h2>
+  <canvas id="chart"></canvas>
+</div>
 
-    async function loadChart() {
-      const res = await fetch('/report');
-      const data = await res.json();
+<script>
+const ws = new WebSocket("ws://localhost:11000");
 
-      const labels = data.map(d => d.time);
-      const values = data.map(d => d.status);
+let chart;
 
-      if (chart) {
-        chart.destroy();
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+
+  // 🔴 Docker logs
+  if (data.type === "docker") {
+    const el = document.getElementById("dockerLogs");
+    el.innerText = data.data;
+    el.scrollTop = el.scrollHeight;
+  }
+
+  // ⚙️ Jenkins logs
+  if (data.type === "jenkins") {
+    const el = document.getElementById("jenkinsLogs");
+    el.innerText = data.data;
+    el.scrollTop = el.scrollHeight;
+  }
+
+  // 🟢 Status
+  if (data.type === "status") {
+    document.getElementById("status").innerText = data.data;
+  }
+
+  // 📊 Chart (optional if backend sends)
+  if (data.type === "chart") {
+    const ctx = document.getElementById("chart");
+
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: data.data.map(d => d.build),
+        datasets: [{
+          label: 'Builds',
+          data: data.data.map(d => d.status)
+        }]
       }
+    });
+  }
+};
 
-      chart = new Chart(document.getElementById('chart'), {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Build Status',
-            data: values
-          }]
-        }
-      });
-    }
+ws.onerror = () => {
+  document.getElementById("status").innerText = "Connection Error";
+};
 
-    setInterval(loadChart, 5000);
-    loadChart();
-  </script>
+ws.onopen = () => {
+  document.getElementById("status").innerText = "Connected";
+};
+</script>
 
 </body>
 </html>

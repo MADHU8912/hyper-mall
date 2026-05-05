@@ -3,16 +3,9 @@ pipeline {
 
     stages {
 
-        stage('Clone') {
-            steps {
-                checkout scm
-                echo 'Repository cloned successfully'
-            }
-        }
-
         stage('Build') {
             steps {
-                bat 'echo Building Hyper Mall...'
+                bat 'echo Building...'
             }
         }
 
@@ -30,11 +23,9 @@ pipeline {
                     passwordVariable: 'PASS'
                 )]) {
                     bat '''
-                    echo Logging into Docker...
-                    docker logout
-                    echo %PASS%> docker_pass.txt
-                    type docker_pass.txt | docker login -u %USER% --password-stdin
-                    del docker_pass.txt
+                    echo %PASS%> pass.txt
+                    type pass.txt | docker login -u %USER% --password-stdin
+                    del pass.txt
                     '''
                 }
             }
@@ -46,25 +37,26 @@ pipeline {
             }
         }
 
-        stage('Docker Pull') {
-            steps {
-                bat 'docker pull nikhilabba12/hyper-mall'
-            }
-        }
-
-        stage('Deploy (Run Container)') {
+        stage('Export Logs') {
             steps {
                 bat '''
-                docker stop hyper-mall-container >nul 2>&1
-                docker rm hyper-mall-container >nul 2>&1
-                docker run -d -p 10000:10000 --name hyper-mall-container nikhilabba12/hyper-mall
+                echo Jenkins Build Started > frontend\\jenkins_logs.txt
+                echo Build Success >> frontend\\jenkins_logs.txt
                 '''
             }
         }
 
-        stage('Verify') {
+        stage('Build Report') {
             steps {
-                bat 'docker ps'
+                bat '''
+                echo { "status":"SUCCESS","time":"%DATE% %TIME%" } > frontend\\report.json
+                '''
+            }
+        }
+
+        stage('Deploy Render') {
+            steps {
+                bat 'curl -X POST https://your-render-deploy-hook'
             }
         }
     }

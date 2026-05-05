@@ -1,53 +1,76 @@
 const express = require('express');
-const http = require('http');
+const { exec } = require('child_process');
 const WebSocket = require('ws');
-const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
 
 const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const PORT = 11000;
 
-// 1. Dynamic Port for Render
-const PORT = process.env.PORT || 10000;
-
-// 2. Serve Frontend Files
-// This allows Render to show your index.html when you visit the URL
+// serve frontend
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// 3. Root Route (Fixes "Cannot GET /")
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
-// 4. API Status Route
-app.get('/api/status', (req, res) => {
-    res.json({
-        project: "Hyper Mall",
-        status: "Online",
-        timestamp: new Date()
-    });
+// start server
+const server = app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
 
-// 5. WebSocket Logic for Live Logs
+// ✅ FIX: define WebSocket server
+const wss = new WebSocket.Server({ server });
+
 wss.on('connection', (ws) => {
-    console.log('Dashboard Client Connected');
-    
-    // Send logs every 2 seconds to the UI
-    const logInterval = setInterval(() => {
-        const logPath = path.join(__dirname, '../frontend/logs.txt');
-        
-        if (fs.existsSync(logPath)) {
-            const logs = fs.readFileSync(logPath, 'utf8');
-            ws.send(JSON.stringify({ type: 'logs', data: logs }));
-        } else {
-            ws.send(JSON.stringify({ type: 'logs', data: "Waiting for Jenkins logs..." }));
-        }
-    }, 2000);
+    console.log('Client connected');
 
-    ws.on('close', () => clearInterval(logInterval));
-});
+    const interval = setInterval(() => {
 
-server.listen(PORT, () => {
-    console.log(`🚀 Hyper Mall Server running on port ${PORT}`);
+        // 🔴 Docker logs
+        exec('docker logs hyper-mall-container', (err, stdout) => {
+            if (!err) {
+                ws.send(JSON.stringify({
+                    type: "docker",
+                    data: stdout.slice(-2000)
+                }));
+            }
+        });
+
+        // ⚙️ Jenkins logs
+        const USER = process.env.JENKINS_USER;
+        const TOKEN = process.env.JENKINS_TOKEN;
+
+        axios.get("http://127.0.0.1:8080/job/hyper-mall/lastBuild/consoleText", {
+            auth: {
+                username: USER,
+                password: TOKEN
+            }
+        })
+        .then(res => {
+            ws.send(JSON.stringify({
+                type: "jenkins",
+                data: res.data.slice(-2000)
+            }));
+        })
+        .catch(err => {
+            console.log("Jenkins ERROR:", err.message);
+
+            ws.send(JSON.stringify({
+                type: "jenkins",
+                data: "Jenkins not reachable"
+            }));
+        });
+
+        // 🟢 status
+        exec('docker ps --filter "name=hyper-mall-container"', (err, stdout) => {
+            ws.send(JSON.stringify({
+                type: "status",
+                data: stdout.includes("hyper-mall-container") ? "RUNNING" : "STOPPED"
+            }));
+        });
+
+    }, 3000);
+
+    ws.on('close', () => clearInterval(interval));
 });
