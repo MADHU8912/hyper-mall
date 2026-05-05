@@ -1,16 +1,17 @@
-# Dockerfile (MUST be in root)
 FROM node:20
 
 WORKDIR /app
 
-# 👇 copy backend package.json
+# copy backend dependencies
 COPY backend/package*.json ./
-
 RUN npm install
 
-# 👇 copy full backend code
+# copy backend code
 COPY backend .
 
-EXPOSE 3000
+# ✅ ADD THIS (VERY IMPORTANT)
+COPY frontend ./frontend
+
+EXPOSE 10000
 
 CMD ["node", "server.js"]
