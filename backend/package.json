@@ -2,14 +2,15 @@
   "name": "hyper-mall",
   "version": "1.0.0",
   "description": "Hyper Mall CI/CD Dashboard",
-  "main": "backend/server.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node backend/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
     "ws": "^8.11.0",
-    "axios": "^1.6.0"
+    "axios": "^1.6.8",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.13"
   }
 }
