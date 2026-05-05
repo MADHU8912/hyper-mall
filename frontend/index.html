@@ -33,6 +33,11 @@
       padding: 10px;
       border-radius: 5px;
     }
+
+    #alertBox {
+      font-size: 18px;
+      font-weight: bold;
+    }
   </style>
 </head>
 
@@ -44,6 +49,12 @@
 <div class="card">
   <h2>Status</h2>
   <p id="status">Connecting...</p>
+</div>
+
+<!-- 🚨 Alerts (NEW) -->
+<div class="card">
+  <h2>🚨 Alerts</h2>
+  <p id="alertBox">Waiting...</p>
 </div>
 
 <!-- 🔴 Docker Logs -->
@@ -91,7 +102,22 @@ ws.onmessage = (event) => {
     document.getElementById("status").innerText = data.data;
   }
 
-  // 📊 Chart (optional if backend sends)
+  // 🚨 Alerts (FIXED + IMPROVED)
+  if (data.type === "alert") {
+    const alertBox = document.getElementById("alertBox");
+    alertBox.innerText = data.data;
+
+    // 🔥 Color logic (NEW)
+    if (data.data.includes("FAILED")) {
+      alertBox.style.color = "red";
+    } else if (data.data.includes("SUCCESS")) {
+      alertBox.style.color = "lightgreen";
+    } else {
+      alertBox.style.color = "white";
+    }
+  }
+
+  // 📊 Chart
   if (data.type === "chart") {
     const ctx = document.getElementById("chart");
 

@@ -37,25 +37,22 @@ pipeline {
             }
         }
 
-        // ✅ NEW
         stage('Docker Pull') {
             steps {
                 bat 'docker pull nikhilabba12/hyper-mall'
             }
         }
 
-        // ✅ NEW
         stage('Deploy (Run Container)') {
-            steps {
-                bat '''
-                docker stop hyper-mall-container || exit 0
-                docker rm hyper-mall-container || exit 0
-                docker run -d -p 10000:10000 --name hyper-mall-container nikhilabba12/hyper-mall
-                '''
-            }
-        }
+    steps {
+        bat '''
+        docker stop hyper-mall-container || exit 0
+        docker rm hyper-mall-container || exit 0
+        docker run -d -p 10000:10000 --restart=always --name hyper-mall-container nikhilabba12/hyper-mall
+        '''
+    }
+}
 
-        // ✅ NEW
         stage('Verify') {
             steps {
                 bat 'docker ps'
@@ -66,24 +63,34 @@ pipeline {
             steps {
                 bat '''
                 echo Jenkins Build Started > frontend\\jenkins_logs.txt
-                echo Build Success >> frontend\\jenkins_logs.txt
                 '''
             }
         }
 
-        stage('Build Report') {
-            steps {
-                bat '''
-                echo { "status":"SUCCESS","time":"%DATE% %TIME%" } > frontend\\report.json
-                '''
-            }
-        }
+       stage('Deploy Render') {
+    steps {
+        bat 'curl -X POST https://api.render.com/deploy/srv-d7s4jknavr4c73fkpreg?key=https://api.render.com/deploy/srv-d7s4jknavr4c73fkpreg?key=W2_fnQVbnXQ'
+    }
+}
 
-        // ⚠️ FIX THIS URL
-        stage('Deploy Render') {
-            steps {
-                bat 'curl -X POST https://YOUR_REAL_RENDER_URL'
-            }
+    // ✅ ✅ ADD HERE (IMPORTANT: outside stages)
+    post {
+        success {
+            bat '''
+            echo BUILD SUCCESS > frontend\\alert.txt
+            echo SUCCESS > frontend\\jenkins_logs.txt
+            echo { "status":"SUCCESS","time":"%DATE% %TIME%" } > frontend\\report.json
+            '''
+        }
+        failure {
+            bat '''
+            echo BUILD FAILED > frontend\\alert.txt
+            echo FAILED > frontend\\jenkins_logs.txt
+            echo { "status":"FAILED","time":"%DATE% %TIME%" } > frontend\\report.json
+            '''
+        }
+        always {
+            bat 'echo Pipeline completed at %TIME%'
         }
     }
 }
